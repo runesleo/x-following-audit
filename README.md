@@ -2,13 +2,13 @@
 
 中文版本: [README.zh.md](./README.zh.md)
 
-Safety-first X following cleanup workflow for creators and operators who want structured account hygiene without risky high-frequency automation.
+Safety-first X following audit workflow for creators and operators who want cleaner signal and better list hygiene.
 
 ## Core features
 
 - Read-only following audit with conservative scoring.
 - Human-review HTML board before any action.
-- Safe executor with dry-run default and small-batch design.
+- Safe action runner with dry-run default and small-batch design.
 - Optional live fetch with `xreach`, but not required for demo flow.
 
 ## Following Audit Pipeline
@@ -18,11 +18,11 @@ Safety-first X following cleanup workflow for creators and operators who want st
 - **Static risk scoring** — classify following accounts into `keep`, `maybe`, and `unfollow_candidate`.
 - **Recent-signal enrichment** — reduce false positives by checking recent activity/content before action.
 - **Local HTML review board** — search, filter, and manually export approved handles.
-- **Safe batch executor** — default `dry-run`, random delay, small-batch execution, and per-run JSON logs.
+- **Safe action runner** — default `dry-run`, random delay, small-batch execution, and per-run JSON logs.
 
 ### How it works
 
-You run a read-only audit first, then manually review candidates in a local HTML page, then execute only approved handles in small batches.  
+You run a read-only audit first, then manually review candidates in a local HTML page, then apply only approved actions in small batches.  
 The execution step is designed to be conservative by default (`dry-run` first, explicit `--execute` required).
 
 ```text
@@ -58,7 +58,7 @@ Use the same script pipeline directly from shell. No IDE-specific runtime is req
 
 **Path A (no xreach, easiest):**
 - Start from an existing audit JSON (your own export or sample data).
-- Run `render_following_audit_html.py` directly, then dry-run executor.
+- Run `render_following_audit_html.py` directly, then dry-run the action runner.
 - Optional: run `following_recent_audit.py` only when `xreach` is available.
 - Example:
   ```bash
@@ -85,7 +85,7 @@ Use the same script pipeline directly from shell. No IDE-specific runtime is req
 |-------|---------|------------|
 | Target handle | `--handle runes_leo` | Fetches following pages via `xreach following` |
 | Static audit file | `following_audit_20260521_124427.json` | Enriched into `_recent.json` |
-| Approved handle list | `@handle_a` per line | Consumed by safe batch executor |
+| Approved handle list | `@handle_a` per line | Consumed by safe action runner |
 | Keep overrides | `@never_unfollow` per line | Forces keep / skips execution |
 
 ### Data sources

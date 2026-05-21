@@ -2,14 +2,14 @@
 
 English: [README.md](./README.md)
 
-给关注列表做“低风险瘦身”的工作流：先审计、再复核、最后小批次执行。  
+给关注列表做“低风险体检”的工作流：先审计、再复核、最后小批次执行。  
 目标是提升信息质量，不是做高频自动化。
 
 ## 核心功能
 
 - 只读审计：先评分，不先执行动作。
 - 人工复核：本地 HTML 页面筛选与导出清单。
-- 安全执行：默认 dry-run，小批次、随机间隔。
+- 安全动作执行：默认 dry-run，小批次、随机间隔。
 - 可选增强：支持 `xreach` 实时拉取，但不是硬依赖。
 
 ## 关注审计流水线
@@ -19,7 +19,7 @@ English: [README.md](./README.md)
 - **静态打分分桶** — 把关注对象分成 `keep`、`maybe`、`unfollow_candidate`。
 - **Recent 二次校验** — 对低置信账号补一层近期内容/活跃信号。
 - **本地 HTML 审核页** — 支持搜索、筛选、勾选并导出执行清单。
-- **安全批执行器** — 默认 `dry-run`，随机间隔，小批次执行，自动落日志。
+- **安全动作执行器** — 默认 `dry-run`，随机间隔，小批次执行，自动落日志。
 
 ### How it works
 
@@ -86,7 +86,7 @@ cp samples/keep_overrides.sample.txt data/following_audit/keep_overrides.txt
 |-------|---------|------------|
 | 目标账号 | `--handle your_handle` | 拉取 following 列表 |
 | 静态审计文件 | `following_audit_20260521_124427.json` | 生成 recent 增强版 |
-| 执行清单 | 每行一个 `@handle` | 批处理执行输入 |
+| 执行清单 | 每行一个 `@handle` | 安全动作执行输入 |
 | 白名单 | 每行一个 `@handle` | 强制保留 / 执行跳过 |
 
 ### Data sources
