@@ -32,8 +32,9 @@ def render_row(row: dict) -> str:
     recent_score = recent.get("recent_score", "")
     recent_status = html.escape(str(recent.get("fetch_status") or "not_checked"))
     recent_reasons = html.escape("; ".join(recent.get("reasons") or []))
-    final_bucket = html.escape(str(row.get("final_bucket") or row.get("bucket") or ""))
-    bucket = html.escape(row.get("bucket") or "")
+    final_bucket_raw = str(row.get("final_bucket") or row.get("bucket") or "")
+    final_bucket = html.escape(final_bucket_raw)
+    bucket = html.escape(str(row.get("bucket") or ""))
     score = int(row.get("score") or 0)
     followers = int(user.get("followers") or 0)
     following = int(user.get("following") or 0)
@@ -42,9 +43,9 @@ def render_row(row: dict) -> str:
     search_text = html.escape(f"{username} {name} {bio_raw}".lower(), quote=True)
     url = f"https://x.com/{username}"
     return f"""
-    <tr data-bucket="{bucket}" data-score="{score}" data-handle="{username.lower()}" data-text="{search_text}">
+    <tr data-bucket="{final_bucket}" data-static-bucket="{bucket}" data-score="{score}" data-handle="{username.lower()}" data-text="{search_text}">
       <td><input type="checkbox" class="pick" value="{username}"></td>
-      <td><span class="badge {bucket}">{bucket}</span></td>
+      <td><span class="badge {final_bucket}">{final_bucket}</span></td>
       <td class="score">{score}</td>
       <td><a href="{url}" target="_blank">@{username}</a><div class="name">{name} {verified}</div></td>
       <td class="num">{followers:,}</td>
@@ -71,7 +72,8 @@ def main() -> None:
 
     counts: dict[str, int] = {}
     for row in rows:
-        counts[row["bucket"]] = counts.get(row["bucket"], 0) + 1
+        key = str(row.get("final_bucket") or row.get("bucket") or "unknown")
+        counts[key] = counts.get(key, 0) + 1
 
     body_rows = "\n".join(render_row(row) for row in rows)
     cards = "\n".join(
@@ -145,7 +147,7 @@ def main() -> None:
     <table>
       <thead>
         <tr>
-          <th></th><th>Bucket</th><th>Score</th><th>Account</th><th>Followers</th><th>Following</th><th>Tweets</th><th>Final</th><th>Recent</th><th>Recent Notes</th><th>Reasons</th><th>Bio</th>
+          <th></th><th>Bucket (final)</th><th>Score</th><th>Account</th><th>Followers</th><th>Following</th><th>Tweets</th><th>Final</th><th>Recent</th><th>Recent Notes</th><th>Reasons</th><th>Bio</th>
         </tr>
       </thead>
       <tbody>{body_rows}</tbody>

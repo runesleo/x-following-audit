@@ -18,6 +18,7 @@ Security notes:
 - Treat this file as a live account credential.
 - Never commit or share it.
 - Recommended: `chmod 600 data/x_cookies.json`.
+- The executor enforces strict permission check and will refuse to run if this file is world/group-readable.
 
 ## 1) Static audit
 
@@ -79,8 +80,19 @@ node scripts/batch_unfollow_safe.js --input data/following_audit/approved_unfoll
 ## 6) Execute in small batches
 
 ```bash
-node scripts/batch_unfollow_safe.js --input data/following_audit/approved_unfollow.txt --max 5 --execute
+node scripts/batch_unfollow_safe.js \
+  --input data/following_audit/approved_unfollow.txt \
+  --max 5 \
+  --daily-cap 20 \
+  --execute \
+  --confirm-execute UNFOLLOW
 ```
+
+Safety guards in execute mode:
+- `--confirm-execute UNFOLLOW` is mandatory.
+- Daily quota is enforced via `--daily-cap` (default 20/day, persisted in `data/following_audit/unfollow_quota_state.json`).
+- Invalid handles are rejected (`^[A-Za-z0-9_]{1,15}$`).
+- Post-click verification checks follow state before counting a successful action.
 
 ## 7) Keep list
 

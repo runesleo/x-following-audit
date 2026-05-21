@@ -28,6 +28,7 @@ CORE_KEYWORDS = [
     "codex",
     "cursor",
     "openai",
+    "anthropic",
     "llm",
     "prediction",
     "polymarket",
@@ -35,6 +36,7 @@ CORE_KEYWORDS = [
     "quant",
     "trading",
     "builder",
+    "developer",
     "startup",
     "github",
     "crypto",
@@ -46,6 +48,7 @@ CORE_KEYWORDS = [
     "量化",
     "交易",
     "开发",
+    "独立开发",
     "创业",
 ]
 

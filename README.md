@@ -41,7 +41,7 @@ flowchart LR
 - **Static risk scoring** — classify following accounts into `keep`, `maybe`, and `unfollow_candidate`.
 - **Recent-signal enrichment** — reduce false positives by checking recent activity/content before action.
 - **Local HTML review board** — search, filter, and manually export approved handles.
-- **Safe action runner** — default `dry-run`, random delay, small-batch execution, and per-run JSON logs.
+- **Safe action runner** — default `dry-run`, random delay, mandatory execute confirmation, daily quota guard, and per-run JSON logs.
 
 ### How it works
 
@@ -134,7 +134,7 @@ Use the same script pipeline directly from shell. No IDE-specific runtime is req
 - [ ] Add lightweight false-positive feedback loop — improve subsequent suggestions.
 
 **Safety controls**
-- [ ] Add explicit daily quota guard in executor — hard stop after configurable count.
+- [x] Add explicit daily quota guard in executor — hard stop after configurable count.
 - [ ] Add preflight login-state probe command — fail fast before batch runs.
 
 **Review UX**
