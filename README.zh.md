@@ -21,12 +21,12 @@ English: [README.md](./README.md)
 
 ```mermaid
 flowchart LR
-    A[Following list input] --> B[AI Audit scoring]
-    B --> C[Recent signal enrichment]
-    C --> D[Local HTML manual review]
-    D --> E[Dry-run]
-    E --> F[Small action execute]
-    F --> G[Run logs and iteration]
+    A[关注列表输入] --> B[AI 审计打分]
+    B --> C[Recent 信号补充]
+    C --> D[本地 HTML 人工复核]
+    D --> E[Dry-run 预演]
+    E --> F[小批次执行]
+    F --> G[日志记录与迭代]
 ```
 
 ## 核心功能
