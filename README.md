@@ -2,7 +2,30 @@
 
 中文版本: [README.zh.md](./README.zh.md)
 
-Safety-first X following audit workflow for creators and operators who want cleaner signal and better list hygiene.
+Many creators/operators hit the same problem: following lists silently bloat over time, low-activity accounts accumulate, and timeline signal quality drops.
+
+Recent X algorithm discussions suggest recommendation quality is tightly tied to interaction patterns and interest graph. Following composition may not directly determine recommendations, but it can shape what you consume and interact with over time (treat this as a practical hypothesis to validate, not an absolute claim).
+
+This project turns that pain into a safer workflow: AI-assisted list audit -> human review -> small, conservative actions.
+
+## Why this exists (pain point)
+
+- Manual review of large following lists does not scale.
+- Account activity/relevance drifts over time; old follows become stale.
+- Most tools focus on execution speed, not review quality and risk control.
+- Users often need safer hygiene workflows, not aggressive automation.
+
+## Workflow diagram
+
+```mermaid
+flowchart LR
+    A[Following list input] --> B[AI Audit scoring]
+    B --> C[Recent signal enrichment]
+    C --> D[Local HTML manual review]
+    D --> E[Dry-run]
+    E --> F[Small action execute]
+    F --> G[Run logs and iteration]
+```
 
 ## Core features
 
