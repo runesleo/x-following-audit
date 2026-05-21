@@ -4,6 +4,13 @@
 
 Safety-first X following cleanup workflow for creators and operators who want structured account hygiene without risky high-frequency automation.
 
+## Core features
+
+- Read-only following audit with conservative scoring.
+- Human-review HTML board before any action.
+- Safe executor with dry-run default and small-batch design.
+- Optional live fetch with `xreach`, but not required for demo flow.
+
 ## Following Audit Pipeline
 
 ### What you get
@@ -41,17 +48,36 @@ npm install
 ```bash
 mkdir -p data/following_audit
 cp samples/approved_unfollow.sample.txt data/following_audit/approved_unfollow.txt
+cp samples/keep_overrides.sample.txt data/following_audit/keep_overrides.txt
 ```
 
 **Any other AI agent:**
 Use the same script pipeline directly from shell. No IDE-specific runtime is required.
 
+### Quick start paths
+
+**Path A (no xreach, easiest):**
+- Start from an existing audit JSON (your own export or sample data).
+- Run `render_following_audit_html.py` directly, then dry-run executor.
+- Optional: run `following_recent_audit.py` only when `xreach` is available.
+- Example:
+  ```bash
+  cp samples/following_audit.sample.json data/following_audit/following_audit_demo.json
+  python3 scripts/render_following_audit_html.py data/following_audit/following_audit_demo.json
+  ```
+
+**Path B (with xreach, full auto-fetch):**
+- Use `following_audit.py --handle <your_handle>` to fetch live following list first.
+- Continue with the same review and execution flow.
+
 ### Requirements
 
-- `xreach` CLI installed and authenticated
-- Node.js 18+ (for `puppeteer`)
+- Node.js 18+ (for `puppeteer` executor)
 - Valid X session cookie file at `data/x_cookies.json` (`auth_token`, `ct0`)
+- `xreach` is optional but recommended for automatic live fetch
 - That's it. Keep batches small and reviewed.
+
+> Cookie safety: treat `data/x_cookies.json` as account credentials. Never commit or share it, and use restrictive permissions (e.g. `chmod 600 data/x_cookies.json`).
 
 ### Supported input
 
@@ -75,6 +101,8 @@ Use the same script pipeline directly from shell. No IDE-specific runtime is req
 - Relies on login-session automation, not official stable X API contracts.
 - UI/API changes on X can break unfollow button detection.
 - High-frequency execution is intentionally unsupported by design.
+- If you do not use `xreach`, you need to provide audit JSON input yourself.
+- You are responsible for complying with X Terms and automation policies.
 
 ## Roadmap
 

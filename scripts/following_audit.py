@@ -84,7 +84,13 @@ def fetch_following(handle: str, max_pages: int, delay_ms: int) -> dict[str, Any
         str(delay_ms),
         "--plain",
     ]
-    result = subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=300)
+    try:
+        result = subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=300)
+    except FileNotFoundError as exc:
+        raise SystemExit(
+            "xreach is not installed. Either install xreach for live fetch, "
+            "or provide an existing audit file via --from-file."
+        ) from exc
     return extract_json(result.stdout + result.stderr)
 
 

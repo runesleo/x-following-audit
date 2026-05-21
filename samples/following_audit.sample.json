@@ -1,0 +1,40 @@
+[
+  {
+    "bucket": "unfollow_candidate",
+    "score": -5,
+    "reasons": [
+      "no core keywords",
+      "very low follower/following ratio 0.04"
+    ],
+    "user": {
+      "id": "10001",
+      "username": "low_signal_demo",
+      "name": "Low Signal Demo",
+      "description": "gm",
+      "followers": 12,
+      "following": 300,
+      "tweets": 8,
+      "verified": false,
+      "protected": false
+    }
+  },
+  {
+    "bucket": "keep",
+    "score": 8,
+    "reasons": [
+      "core keywords: ai, builder",
+      "active account"
+    ],
+    "user": {
+      "id": "10002",
+      "username": "core_signal_demo",
+      "name": "Core Signal Demo",
+      "description": "AI builder, open source, prediction markets",
+      "followers": 2200,
+      "following": 310,
+      "tweets": 980,
+      "verified": false,
+      "protected": false
+    }
+  }
+]

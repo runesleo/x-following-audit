@@ -14,6 +14,11 @@ Format:
 }
 ```
 
+Security notes:
+- Treat this file as a live account credential.
+- Never commit or share it.
+- Recommended: `chmod 600 data/x_cookies.json`.
+
 ## 1) Static audit
 
 ```bash
@@ -24,6 +29,8 @@ Outputs:
 - `data/following_audit/following_raw_<timestamp>.json`
 - `data/following_audit/following_audit_<timestamp>.json`
 
+> If you don't use `xreach`, skip this step and place an existing audit JSON under `data/following_audit/`.
+
 ## 2) Recent enrichment
 
 ```bash
@@ -32,6 +39,8 @@ python3 scripts/following_recent_audit.py
 
 Output:
 - `data/following_audit/following_audit_<timestamp>_recent.json`
+
+> If you don't use `xreach`, you can skip this step and render HTML from your existing audit JSON directly.
 
 ## 3) HTML review page
 
@@ -52,6 +61,13 @@ One handle per line:
 ```txt
 @handle_a
 @handle_b
+```
+
+You can bootstrap from samples:
+
+```bash
+cp samples/approved_unfollow.sample.txt data/following_audit/approved_unfollow.txt
+cp samples/keep_overrides.sample.txt data/following_audit/keep_overrides.txt
 ```
 
 ## 5) Dry-run first

@@ -1,0 +1,2 @@
+# one protected handle per line
+@important_handle

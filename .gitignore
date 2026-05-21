@@ -12,6 +12,4 @@ data/*
 !data/following_audit/
 data/following_audit/*
 !data/following_audit/.gitkeep
-!data/following_audit/approved_unfollow.txt
-!data/following_audit/keep_overrides.txt
 

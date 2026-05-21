@@ -29,6 +29,10 @@ function parseArgs(argv) {
   if (!Number.isFinite(args.minDelayMs) || !Number.isFinite(args.maxDelayMs) || args.minDelayMs < 0 || args.maxDelayMs < args.minDelayMs) {
     throw new Error('Invalid delay range');
   }
+  if (args.execute) {
+    if (args.max > 20) throw new Error('For safety, --execute only allows --max <= 20');
+    if (args.minDelayMs < 6000) throw new Error('For safety, --execute requires --min-delay-ms >= 6000');
+  }
   return args;
 }
 
@@ -122,9 +126,13 @@ async function run() {
   }
 
   const cookieData = JSON.parse(fs.readFileSync(COOKIES_PATH, 'utf8'));
+  const launchArgs = [];
+  if (process.env.PUPPETEER_NO_SANDBOX === '1') {
+    launchArgs.push('--no-sandbox', '--disable-setuid-sandbox');
+  }
   const browser = await puppeteer.launch({
     headless: args.headless,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    args: launchArgs,
   });
   const page = await browser.newPage();
   await page.setViewport({ width: 1366, height: 900 });

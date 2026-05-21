@@ -1,4 +1,0 @@
-# One handle per line
-# Example:
-# @handle_a
-# @handle_b

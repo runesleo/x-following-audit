@@ -78,7 +78,7 @@ def main() -> None:
         f'<div class="card"><b>{count}</b>{html.escape(bucket)}</div>'
         for bucket, count in sorted(counts.items())
     )
-    source = html.escape(str(input_path))
+    source = html.escape(input_path.name)
 
     doc = f"""<!doctype html>
 <html lang="zh-CN">
