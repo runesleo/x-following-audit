@@ -1,0 +1,12 @@
+{
+  "name": "x-following-audit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Safety-first X following audit and batch unfollow workflow",
+  "scripts": {
+    "dry-run": "node scripts/batch_unfollow_safe.js --input data/following_audit/approved_unfollow.txt --max 5"
+  },
+  "dependencies": {
+    "puppeteer": "^24.9.0"
+  }
+}
