@@ -1,6 +1,7 @@
 .DS_Store
 .env
 .env.*
+!.env.example
 node_modules/
 __pycache__/
 *.pyc
@@ -12,4 +13,3 @@ data/*
 !data/following_audit/
 data/following_audit/*
 !data/following_audit/.gitkeep
-

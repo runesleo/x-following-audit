@@ -16,7 +16,21 @@
       "tweets": 8,
       "verified": false,
       "protected": false
-    }
+    },
+    "recent": {
+      "recent_score": -7,
+      "reasons": [
+        "inactive 240d",
+        "recent tweets off-core"
+      ],
+      "last_tweet_days": 240,
+      "last_active_at": "2025-09-27T12:00:00+00:00",
+      "sample": [
+        "gm fam"
+      ],
+      "fetch_status": "ok"
+    },
+    "final_bucket": "unfollow_candidate"
   },
   {
     "bucket": "keep",
@@ -35,6 +49,68 @@
       "tweets": 980,
       "verified": false,
       "protected": false
-    }
+    },
+    "recent": {
+      "recent_score": 5,
+      "reasons": [
+        "active within 3d",
+        "recent core topics: ai, builder"
+      ],
+      "last_tweet_days": 3,
+      "last_active_at": "2026-05-22T08:30:00+00:00",
+      "sample": [
+        "shipping a small agent tool today"
+      ],
+      "fetch_status": "ok"
+    },
+    "final_bucket": "keep"
+  },
+  {
+    "bucket": "maybe",
+    "score": 2,
+    "reasons": [
+      "some overlap keywords"
+    ],
+    "user": {
+      "id": "10003",
+      "username": "stale_maybe_demo",
+      "name": "Stale Maybe Demo",
+      "description": "builder, sometimes posts",
+      "followers": 400,
+      "following": 500,
+      "tweets": 120,
+      "verified": false,
+      "protected": false
+    },
+    "recent": {
+      "recent_score": -2,
+      "reasons": [
+        "inactive 120d"
+      ],
+      "last_tweet_days": 120,
+      "last_active_at": "2026-01-25T10:00:00+00:00",
+      "sample": [],
+      "fetch_status": "ok"
+    },
+    "final_bucket": "manual_review"
+  },
+  {
+    "bucket": "maybe",
+    "score": 1,
+    "reasons": [
+      "weak signal"
+    ],
+    "user": {
+      "id": "10004",
+      "username": "unknown_activity_demo",
+      "name": "Unknown Activity Demo",
+      "description": "not checked yet",
+      "followers": 90,
+      "following": 210,
+      "tweets": 15,
+      "verified": false,
+      "protected": false
+    },
+    "final_bucket": "maybe"
   }
 ]
