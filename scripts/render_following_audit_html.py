@@ -21,6 +21,22 @@ def default_input() -> Path:
     return candidates[0]
 
 
+def inactive_label(last_days: int | None, fetch_status: str) -> str:
+    if last_days is None:
+        if fetch_status in ("failed", "empty", "not_checked", ""):
+            return "—"
+        return "?"
+    if last_days == 0:
+        return "今天"
+    return f"{last_days}d"
+
+
+def inactive_sort_key(last_days: int | None) -> int:
+    if last_days is None:
+        return -1
+    return last_days
+
+
 def render_row(row: dict) -> str:
     user = row["user"]
     username = html.escape(str(user.get("username") or ""))
@@ -32,6 +48,24 @@ def render_row(row: dict) -> str:
     recent_score = recent.get("recent_score", "")
     recent_status = html.escape(str(recent.get("fetch_status") or "not_checked"))
     recent_reasons = html.escape("; ".join(recent.get("reasons") or []))
+    last_days_raw = recent.get("last_tweet_days")
+    last_days: int | None
+    if last_days_raw is None or last_days_raw == "":
+        last_days = None
+    else:
+        last_days = int(last_days_raw)
+    inactive_text = html.escape(inactive_label(last_days, str(recent.get("fetch_status") or "")))
+    last_days_attr = "" if last_days is None else str(last_days)
+    inactive_class = "inactive-unknown"
+    if last_days is not None:
+        if last_days <= 30:
+            inactive_class = "inactive-fresh"
+        elif last_days <= 90:
+            inactive_class = "inactive-warn"
+        elif last_days <= 180:
+            inactive_class = "inactive-stale"
+        else:
+            inactive_class = "inactive-dead"
     final_bucket_raw = str(row.get("final_bucket") or row.get("bucket") or "")
     final_bucket = html.escape(final_bucket_raw)
     bucket = html.escape(str(row.get("bucket") or ""))
@@ -43,7 +77,7 @@ def render_row(row: dict) -> str:
     search_text = html.escape(f"{username} {name} {bio_raw}".lower(), quote=True)
     url = f"https://x.com/{username}"
     return f"""
-    <tr data-bucket="{final_bucket}" data-static-bucket="{bucket}" data-score="{score}" data-handle="{username.lower()}" data-text="{search_text}">
+    <tr data-bucket="{final_bucket}" data-static-bucket="{bucket}" data-score="{score}" data-handle="{username.lower()}" data-text="{search_text}" data-last-days="{last_days_attr}" data-inactive-sort="{inactive_sort_key(last_days)}">
       <td><input type="checkbox" class="pick" value="{username}"></td>
       <td><span class="badge {final_bucket}">{final_bucket}</span></td>
       <td class="score">{score}</td>
@@ -51,6 +85,7 @@ def render_row(row: dict) -> str:
       <td class="num">{followers:,}</td>
       <td class="num">{following:,}</td>
       <td class="num">{tweets:,}</td>
+      <td class="inactive {inactive_class}">{inactive_text}</td>
       <td><span class="badge {final_bucket}">{final_bucket}</span></td>
       <td class="score">{recent_score}</td>
       <td>{recent_status}<br><span class="name">{recent_reasons}</span></td>
@@ -114,6 +149,12 @@ def main() -> None:
     .score {{ font-weight:700; }}
     .name, .bio {{ color:var(--muted); }}
     .num {{ text-align:right; white-space:nowrap; }}
+    .inactive {{ font-weight:700; white-space:nowrap; }}
+    .inactive-fresh {{ color:var(--green); }}
+    .inactive-warn {{ color:var(--yellow); }}
+    .inactive-stale {{ color:#fb923c; }}
+    .inactive-dead {{ color:var(--red); }}
+    .inactive-unknown {{ color:var(--muted); }}
     textarea {{ width:100%; min-height:120px; margin-top:12px; background:#18181b; color:var(--text); border:1px solid var(--line); border-radius:8px; padding:10px; }}
     a {{ color:#93c5fd; }}
   </style>
@@ -125,7 +166,7 @@ def main() -> None:
     <div class="controls">
       <input id="q" type="search" placeholder="Search handle / name / bio" size="32">
       <select id="bucket">
-        <option value="all">All</option>
+        <option value="all">All buckets</option>
         <option value="unfollow_candidate">Unfollow candidate</option>
         <option value="manual_review">Manual review</option>
         <option value="maybe">Maybe</option>
@@ -137,6 +178,18 @@ def main() -> None:
         <option value="lt2">score &lt; 2</option>
         <option value="lt4">score &lt; 4</option>
       </select>
+      <select id="inactive">
+        <option value="all">All activity</option>
+        <option value="gt30">未活跃 &gt; 30 天</option>
+        <option value="gt90">未活跃 &gt; 90 天</option>
+        <option value="gt180">未活跃 &gt; 180 天</option>
+        <option value="unknown">未活跃未知</option>
+      </select>
+      <select id="sort">
+        <option value="default">Default order</option>
+        <option value="inactive_desc">未活跃天数 ↓</option>
+        <option value="inactive_asc">未活跃天数 ↑</option>
+      </select>
       <button onclick="exportSelected()">Export selected handles</button>
       <button class="secondary" onclick="selectVisible()">Select visible</button>
       <button class="secondary" onclick="clearChecks()">Clear</button>
@@ -147,7 +200,7 @@ def main() -> None:
     <table>
       <thead>
         <tr>
-          <th></th><th>Bucket (final)</th><th>Score</th><th>Account</th><th>Followers</th><th>Following</th><th>Tweets</th><th>Final</th><th>Recent</th><th>Recent Notes</th><th>Reasons</th><th>Bio</th>
+          <th></th><th>Bucket (final)</th><th>Score</th><th>Account</th><th>Followers</th><th>Following</th><th>Tweets</th><th>未活跃</th><th>Final</th><th>Recent</th><th>Recent Notes</th><th>Reasons</th><th>Bio</th>
         </tr>
       </thead>
       <tbody>{body_rows}</tbody>
@@ -158,9 +211,46 @@ def main() -> None:
     const q = document.getElementById('q');
     const bucket = document.getElementById('bucket');
     const score = document.getElementById('score');
+    const inactive = document.getElementById('inactive');
+    const sort = document.getElementById('sort');
+    const tbody = document.querySelector('tbody');
+    const defaultOrder = [...tbody.querySelectorAll('tr')];
+
+    function lastDays(tr) {{
+      const raw = tr.dataset.lastDays;
+      if (raw === '') return null;
+      const n = Number(raw);
+      return Number.isFinite(n) ? n : null;
+    }}
+
+    function matchesInactive(tr) {{
+      const days = lastDays(tr);
+      if (inactive.value === 'all') return true;
+      if (inactive.value === 'unknown') return days === null;
+      if (inactive.value === 'gt30') return days !== null && days > 30;
+      if (inactive.value === 'gt90') return days !== null && days > 90;
+      if (inactive.value === 'gt180') return days !== null && days > 180;
+      return true;
+    }}
+
+    function applySort() {{
+      const rows = [...tbody.querySelectorAll('tr')];
+      if (sort.value === 'default') {{
+        defaultOrder.forEach(tr => tbody.appendChild(tr));
+        return;
+      }}
+      rows.sort((a, b) => {{
+        const da = Number(a.dataset.inactiveSort);
+        const db = Number(b.dataset.inactiveSort);
+        if (sort.value === 'inactive_desc') return db - da;
+        return da - db;
+      }});
+      rows.forEach(tr => tbody.appendChild(tr));
+    }}
+
     function applyFilter() {{
       const query = q.value.trim().toLowerCase();
-      for (const tr of document.querySelectorAll('tbody tr')) {{
+      for (const tr of tbody.querySelectorAll('tr')) {{
         const b = tr.dataset.bucket;
         const s = Number(tr.dataset.score);
         let ok = true;
@@ -168,14 +258,24 @@ def main() -> None:
         if (score.value === 'lt0' && !(s < 0)) ok = false;
         if (score.value === 'lt2' && !(s < 2)) ok = false;
         if (score.value === 'lt4' && !(s < 4)) ok = false;
+        if (!matchesInactive(tr)) ok = false;
         if (query && !tr.dataset.text.includes(query)) ok = false;
         tr.style.display = ok ? '' : 'none';
       }}
     }}
+
+    function refresh() {{
+      applySort();
+      applyFilter();
+    }}
+
     q.addEventListener('input', applyFilter);
     bucket.addEventListener('change', applyFilter);
     score.addEventListener('change', applyFilter);
-    function visibleRows() {{ return [...document.querySelectorAll('tbody tr')].filter(tr => tr.style.display !== 'none'); }}
+    inactive.addEventListener('change', applyFilter);
+    sort.addEventListener('change', refresh);
+
+    function visibleRows() {{ return [...tbody.querySelectorAll('tr')].filter(tr => tr.style.display !== 'none'); }}
     function selectVisible() {{ visibleRows().forEach(tr => tr.querySelector('.pick').checked = true); }}
     function clearChecks() {{ document.querySelectorAll('.pick').forEach(cb => cb.checked = false); }}
     function exportSelected() {{

@@ -134,17 +134,30 @@ def score_recent(tweets: list[dict[str, Any]], fetch_error: str | None = None) -
             "recent_score": 0,
             "reasons": [f"recent fetch failed: {fetch_error}"],
             "last_tweet_days": None,
+            "last_active_at": None,
             "sample": [],
             "fetch_status": "failed",
         }
     if not tweets:
-        return {"recent_score": -3, "reasons": ["no recent tweets returned"], "last_tweet_days": None, "sample": [], "fetch_status": "empty"}
+        return {
+            "recent_score": -3,
+            "reasons": ["no recent tweets returned"],
+            "last_tweet_days": None,
+            "last_active_at": None,
+            "sample": [],
+            "fetch_status": "empty",
+        }
 
     dates = [parse_date(t.get("createdAt")) for t in tweets]
     dates = [d for d in dates if d is not None]
     last_days = None
+    last_active_at = None
     if dates:
-        last_days = (now - max(dates)).days
+        latest = max(dates)
+        if latest.tzinfo is None:
+            latest = latest.replace(tzinfo=timezone.utc)
+        last_days = (now - latest).days
+        last_active_at = latest.isoformat()
         if last_days <= 30:
             score += 3
             reasons.append(f"active within {last_days}d")
@@ -179,7 +192,14 @@ def score_recent(tweets: list[dict[str, Any]], fetch_error: str | None = None) -
         reasons.append("no original-like recent posts")
 
     sample = [text.replace("\n", " ")[:180] for text in texts[:3]]
-    return {"recent_score": score, "reasons": reasons, "last_tweet_days": last_days, "sample": sample, "fetch_status": "ok"}
+    return {
+        "recent_score": score,
+        "reasons": reasons,
+        "last_tweet_days": last_days,
+        "last_active_at": last_active_at,
+        "sample": sample,
+        "fetch_status": "ok",
+    }
 
 
 def final_bucket(static_bucket: str, static_score: int, recent_score: int, fetch_status: str | None = None) -> str:
@@ -195,33 +215,43 @@ def final_bucket(static_bucket: str, static_score: int, recent_score: int, fetch
     return "keep"
 
 
-def should_enrich(row: dict[str, Any], max_static_score: int) -> bool:
+def should_enrich_low_confidence(row: dict[str, Any], max_static_score: int) -> bool:
     return row.get("bucket") == "unfollow_candidate" or int(row.get("score") or 0) <= max_static_score
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("input", nargs="?", type=Path, help="static audit JSON; default is latest file")
-    parser.add_argument("--out", type=Path)
-    parser.add_argument("--max-static-score", type=int, default=0)
-    parser.add_argument("--limit", type=int, default=30)
-    parser.add_argument("--tweet-count", type=int, default=10)
-    parser.add_argument("--include-replies", action="store_true")
-    parser.add_argument("--sleep-ms", type=int, default=3000)
-    parser.add_argument("--timeout-s", type=int, default=15)
-    args = parser.parse_args()
+def select_candidates(rows: list[dict[str, Any]], scope: str, max_static_score: int) -> list[dict[str, Any]]:
+    if scope == "all":
+        return list(rows)
+    if scope == "low_confidence":
+        return [row for row in rows if should_enrich_low_confidence(row, max_static_score)]
+    if scope == "maybe_and_candidates":
+        return [row for row in rows if row.get("bucket") in ("maybe", "unfollow_candidate")]
+    raise ValueError(f"unknown scope: {scope}")
 
-    input_path = args.input or latest_static_audit_file()
-    rows = json.loads(input_path.read_text(encoding="utf-8"))
-    candidates = [row for row in rows if should_enrich(row, args.max_static_score)]
-    candidates = sorted(candidates, key=lambda row: int(row.get("score") or 0))[: args.limit]
+
+def enrich_audit_rows(
+    rows: list[dict[str, Any]],
+    *,
+    scope: str = "maybe_and_candidates",
+    max_static_score: int = 0,
+    limit: int = 0,
+    tweet_count: int = 10,
+    include_replies: bool = False,
+    sleep_ms: int = 3000,
+    timeout_s: int = 15,
+) -> dict[str, int]:
+    candidates = select_candidates(rows, scope, max_static_score)
+    candidates = sorted(candidates, key=lambda row: int(row.get("score") or 0))
+    if limit > 0:
+        candidates = candidates[:limit]
     selected = {row["user"]["username"] for row in candidates}
+    stats = {"selected": len(selected), "enriched": 0, "stopped_early": 0}
 
-    for idx, row in enumerate(rows, 1):
+    for row in rows:
         username = row["user"]["username"]
         if username not in selected:
             continue
-        tweets, fetch_error = fetch_recent(username, args.tweet_count, args.include_replies, args.timeout_s)
+        tweets, fetch_error = fetch_recent(username, tweet_count, include_replies, timeout_s)
         recent = score_recent(tweets, fetch_error)
         row["recent"] = recent
         row["final_bucket"] = final_bucket(
@@ -230,19 +260,72 @@ def main() -> None:
             int(recent["recent_score"]),
             str(recent.get("fetch_status") or ""),
         )
-        print(f"[{idx}/{len(rows)}] @{username}: static={row['score']} recent={recent['recent_score']} final={row['final_bucket']}")
+        stats["enriched"] += 1
+        last_days = recent.get("last_tweet_days")
+        inactive = f" inactive={last_days}d" if last_days is not None else ""
+        print(
+            f"[{stats['enriched']}/{stats['selected']}] @{username}: "
+            f"static={row['score']} recent={recent['recent_score']} final={row['final_bucket']}{inactive}"
+        )
         if fetch_error and "rate limit" in fetch_error.lower():
             print("rate limit detected; stopping this batch to protect account health")
+            stats["stopped_early"] = 1
             break
-        time.sleep(args.sleep_ms / 1000)
+        time.sleep(sleep_ms / 1000)
 
     for row in rows:
         if "final_bucket" not in row:
             row["final_bucket"] = row["bucket"]
 
-    out = args.out or input_path.with_name(input_path.stem + "_recent.json")
+    return stats
+
+
+def enrich_audit_file(
+    input_path: Path,
+    out_path: Path | None = None,
+    **kwargs: Any,
+) -> Path:
+    rows = json.loads(input_path.read_text(encoding="utf-8"))
+    stats = enrich_audit_rows(rows, **kwargs)
+    out = out_path or input_path.with_name(input_path.stem + "_recent.json")
     out.write_text(json.dumps(rows, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(f"written {out}")
+    print(
+        f"written {out} · selected={stats['selected']} enriched={stats['enriched']}"
+        + (" · stopped_early=1" if stats["stopped_early"] else "")
+    )
+    return out
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("input", nargs="?", type=Path, help="static audit JSON; default is latest file")
+    parser.add_argument("--out", type=Path)
+    parser.add_argument(
+        "--scope",
+        choices=("maybe_and_candidates", "low_confidence", "all"),
+        default="maybe_and_candidates",
+        help="which accounts to fetch recent tweets for (default: all maybe + unfollow_candidate)",
+    )
+    parser.add_argument("--max-static-score", type=int, default=0, help="only used with --scope low_confidence")
+    parser.add_argument("--limit", type=int, default=0, help="cap enriched accounts; 0 = no cap")
+    parser.add_argument("--tweet-count", type=int, default=10)
+    parser.add_argument("--include-replies", action="store_true")
+    parser.add_argument("--sleep-ms", type=int, default=3000)
+    parser.add_argument("--timeout-s", type=int, default=15)
+    args = parser.parse_args()
+
+    input_path = args.input or latest_static_audit_file()
+    enrich_audit_file(
+        input_path,
+        args.out,
+        scope=args.scope,
+        max_static_score=args.max_static_score,
+        limit=args.limit,
+        tweet_count=args.tweet_count,
+        include_replies=args.include_replies,
+        sleep_ms=args.sleep_ms,
+        timeout_s=args.timeout_s,
+    )
 
 
 if __name__ == "__main__":

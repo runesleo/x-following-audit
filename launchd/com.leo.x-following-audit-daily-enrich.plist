@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.leo.x-following-audit-daily-enrich</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/homebrew/bin/python3</string>
+    <string>__HOME__/Projects/x-following-audit/scripts/daily_recent_enrich.py</string>
+    <string>--batch-size</string>
+    <string>25</string>
+    <string>--daily-cap</string>
+    <string>50</string>
+    <string>--sleep-s</string>
+    <string>3</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>__HOME__/Projects/x-following-audit</string>
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict>
+      <key>Hour</key>
+      <integer>10</integer>
+      <key>Minute</key>
+      <integer>30</integer>
+    </dict>
+    <dict>
+      <key>Hour</key>
+      <integer>21</integer>
+      <key>Minute</key>
+      <integer>30</integer>
+    </dict>
+  </array>
+  <key>StandardOutPath</key>
+  <string>__HOME__/Projects/x-following-audit/data/following_audit/logs/launchd.stdout.log</string>
+  <key>StandardErrorPath</key>
+  <string>__HOME__/Projects/x-following-audit/data/following_audit/logs/launchd.stderr.log</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>__HOME__/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+  </dict>
+</dict>
+</plist>
