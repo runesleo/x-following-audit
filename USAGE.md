@@ -26,6 +26,18 @@ Security notes:
 python3 scripts/following_audit.py --handle your_handle
 ```
 
+One-shot static + recent + HTML:
+
+```bash
+python3 scripts/following_audit.py --handle your_handle --with-recent --render-html
+```
+
+`--with-recent` enriches `maybe` + `unfollow_candidate` rows with last-active days via `xreach` (no cap by default). Useful flags:
+
+- `--recent-scope maybe_and_candidates|low_confidence|all`
+- `--recent-limit 0` — `0` means no cap
+- `--recent-sleep-ms 3000`
+
 Outputs:
 - `data/following_audit/following_raw_<timestamp>.json`
 - `data/following_audit/following_audit_<timestamp>.json`
@@ -38,6 +50,18 @@ Outputs:
 python3 scripts/following_recent_audit.py
 ```
 
+By default this enriches all `maybe` + `unfollow_candidate` accounts (no `--limit` cap). Each row gets:
+
+- `recent.last_tweet_days` — days since last tweet
+- `recent.last_active_at` — ISO timestamp of latest tweet
+- `final_bucket` — static + recent combined verdict
+
+Useful flags:
+
+- `--scope maybe_and_candidates|low_confidence|all`
+- `--limit 0` — cap enriched accounts; `0` = no cap
+- `--sleep-ms 3000`
+
 Output:
 - `data/following_audit/following_audit_<timestamp>_recent.json`
 
@@ -48,6 +72,18 @@ Output:
 ```bash
 python3 scripts/render_following_audit_html.py
 ```
+
+Offline preview with sample data:
+
+```bash
+python3 scripts/render_following_audit_html.py samples/following_audit.sample.json
+```
+
+The HTML page includes:
+
+- **未活跃** column (`last_tweet_days`, color-coded)
+- Filters: 未活跃 > 30 / > 90 / > 180 天, 未活跃未知
+- Sort: 未活跃天数 ↑ / ↓
 
 Output:
 - `data/following_audit/following_audit_<timestamp>_recent.html`
@@ -100,3 +136,26 @@ Put protected handles in:
 - `data/following_audit/keep_overrides.txt`
 
 These handles are skipped during execution.
+
+## 8) Daily incremental enrich (launchd)
+
+Safe cadence: **25 accounts/run**, **50/day cap**, twice daily (10:30 + 21:30). Checkpoint after each; stop on rate limit.
+
+```bash
+# one-off manual run
+python3 scripts/daily_recent_enrich.py
+
+# install macOS LaunchAgent (daily 10:30 local)
+bash scripts/install-daily-enrich-launchd.sh
+```
+
+Logs: `data/following_audit/logs/daily_enrich_YYYY-MM-DD.log`
+
+State: `data/following_audit/daily_enrich_state.json` (skips duplicate successful runs same day)
+
+Uninstall:
+
+```bash
+launchctl bootout "gui/$(id -u)/com.leo.x-following-audit-daily-enrich"
+rm ~/Library/LaunchAgents/com.leo.x-following-audit-daily-enrich.plist
+```

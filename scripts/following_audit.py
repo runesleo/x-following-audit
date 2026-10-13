@@ -9,9 +9,11 @@ keep/maybe/unfollow_candidate audit file.
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import re
 import subprocess
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -203,6 +205,16 @@ def classify(user: dict[str, Any]) -> tuple[str, int, list[str]]:
     return bucket, score, reasons
 
 
+def load_recent_module():
+    path = ROOT / "scripts" / "following_recent_audit.py"
+    spec = importlib.util.spec_from_file_location("following_recent_audit", path)
+    if spec is None or spec.loader is None:
+        raise SystemExit(f"Could not load recent audit module: {path}")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--handle", required=True, help="Target handle, e.g. runes_leo")
@@ -210,6 +222,11 @@ def main() -> None:
     parser.add_argument("--delay-ms", type=int, default=1000)
     parser.add_argument("--from-file", type=Path)
     parser.add_argument("--keep-overrides", type=Path, default=DEFAULT_KEEP_OVERRIDES)
+    parser.add_argument("--with-recent", action="store_true", help="After static audit, enrich maybe+candidates with last-active days (requires xreach)")
+    parser.add_argument("--recent-scope", choices=("maybe_and_candidates", "low_confidence", "all"), default="maybe_and_candidates")
+    parser.add_argument("--recent-limit", type=int, default=0, help="0 = enrich all accounts in scope")
+    parser.add_argument("--recent-sleep-ms", type=int, default=3000)
+    parser.add_argument("--render-html", action="store_true", help="Render HTML review page after audit (and recent step if enabled)")
     args = parser.parse_args()
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -249,6 +266,23 @@ def main() -> None:
             f"- @{user['username']} score={row['score']} followers={user['followers']} "
             f"tweets={user['tweets']} :: {'; '.join(row['reasons'][:3])}"
         )
+
+    output_path = audit_path
+    if args.with_recent:
+        if args.from_file:
+            print("\nNote: --with-recent requires live xreach; skipped because --from-file was used.")
+        else:
+            recent_mod = load_recent_module()
+            output_path = recent_mod.enrich_audit_file(
+                audit_path,
+                scope=args.recent_scope,
+                limit=args.recent_limit,
+                sleep_ms=args.recent_sleep_ms,
+            )
+
+    if args.render_html:
+        render_path = ROOT / "scripts" / "render_following_audit_html.py"
+        subprocess.run([sys.executable, str(render_path), str(output_path)], check=True)
 
 
 if __name__ == "__main__":
