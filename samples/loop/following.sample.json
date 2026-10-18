@@ -1,0 +1,8 @@
+[
+ {"handle": "example_builder", "last_post_days": 1, "verdict": "keep", "confidence": "high", "contribution": 4},
+ {"handle": "quiet_since_may", "last_post_days": 120, "verdict": "keep", "confidence": "high", "contribution": 0},
+ {"handle": "sports_takes", "last_post_days": 0, "verdict": "offtopic", "confidence": "high", "contribution": 0},
+ {"handle": "news_reposter", "last_post_days": 0, "verdict": "relay", "confidence": "high", "contribution": 0},
+ {"handle": "new_follow_x", "last_post_days": 3, "verdict": "keep", "confidence": "medium", "contribution": 0},
+ {"handle": "my_cofounder", "last_post_days": 200, "protected": true}
+]

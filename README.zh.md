@@ -129,10 +129,26 @@ cp samples/keep_overrides.sample.txt data/following_audit/keep_overrides.txt
 - 不用 `xreach` 时，需要你自己提供审计 JSON 作为输入。
 - 你需要自行确认符合 X 平台条款与自动化政策。
 
+## 持续迭代（v0.2）
+
+一次性审计很快就过时。持续迭代同时定「加什么」和「删什么」（[原则](./docs/follow-principles.zh.md)）：加官方号、证明有用的号、有来往的真人；删长期不发、跑题、广告、纯搬运的号；新关注有 30–45 天观察期；设总数上限，满了只能先删后加。
+
+```bash
+python3 scripts/follow_loop_plan.py \
+  --config samples/loop/config.sample.json \
+  --following samples/loop/following.sample.json \
+  --candidates samples/loop/candidates.sample.json \
+  --actions samples/loop/actions.sample.jsonl \
+  --today 2026-02-05 --format md
+```
+
+输入是你自己产出的 JSON（关注列表 + 你自己的判定、候选账号 + 来源、操作日志），输出当天计划。它不点任何按钮：看过计划，再用安全执行器小批量执行。测试：`python3 -m unittest discover -s tests`。
+
 ## Roadmap
 
 **评分质量**
 - [ ] 增加可插拔关键词包 — 适配不同赛道。
+- [x] 增加持续迭代：加/删原则、观察期、总数上限 — `follow_loop_plan.py`（v0.2）。
 - [ ] 增加误判反馈回路 — 提升下一批建议质量。
 
 **安全控制**

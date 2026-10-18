@@ -1,0 +1,10 @@
+{
+ "source_priority": ["project", "official", "proven", "interaction", "quoted"],
+ "probation_sources": ["proven", "interaction"],
+ "probation_days": [30, 45],
+ "inactive_days": 60,
+ "noise_days": 3,
+ "follow_daily": 5,
+ "unfollow_daily": 10,
+ "following_cap": 6
+}

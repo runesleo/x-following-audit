@@ -1,0 +1,7 @@
+[
+ {"handle": "quoted_author", "source": "quoted", "why": "you quoted them twice"},
+ {"handle": "tool_official", "source": "official", "why": "official account of a tool you use daily"},
+ {"handle": "project_offic", "source": "project", "why": "project you track"},
+ {"handle": "example_builder", "source": "proven", "why": "already followed"},
+ {"handle": "helpful_replier", "source": "interaction", "why": "you replied to them"}
+]

@@ -127,10 +127,26 @@ Use the same script pipeline directly from shell. No IDE-specific runtime is req
 - If you do not use `xreach`, you need to provide audit JSON input yourself.
 - You are responsible for complying with X Terms and automation policies.
 
+## Continuous loop (v0.2)
+
+A one-off audit goes stale. The loop keeps the list healthy with rules for **both** what to add and what to drop ([principles](./docs/follow-principles.md)): add officials, proven sources and people you talk to; drop silent, off-topic, spammy and pure-repost accounts; put new follows on a 30-45 day probation; keep a total cap so adding means dropping first.
+
+```bash
+python3 scripts/follow_loop_plan.py \
+  --config samples/loop/config.sample.json \
+  --following samples/loop/following.sample.json \
+  --candidates samples/loop/candidates.sample.json \
+  --actions samples/loop/actions.sample.jsonl \
+  --today 2026-02-05 --format md
+```
+
+It reads JSON you produce (your following list with a verdict per account from your own judge, candidate accounts with their source, your action log) and prints today's plan. It never clicks: review the plan, then act with the safe runner in small batches. Tests: `python3 -m unittest discover -s tests`.
+
 ## Roadmap
 
 **Scoring quality**
 - [ ] Add optional domain-specific keyword packs — adapt scoring to different niches.
+- [x] Add a continuous loop with add/drop principles, probation and a total cap — `follow_loop_plan.py` (v0.2).
 - [ ] Add lightweight false-positive feedback loop — improve subsequent suggestions.
 
 **Safety controls**
